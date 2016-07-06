@@ -6,6 +6,20 @@
   <artifactId>herokujavasample</artifactId>
   <version>1.0-SNAPSHOT</version>
 
+  <dependencies>
+    <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>4.5.2</version>
+    </dependency>
+    <dependency>
+        <groupId>org.json</groupId>
+        <artifactId>json</artifactId>
+        <version>20151123</version>
+    </dependency>
+  </dependencies>
+  
+  
   <build>
     <plugins>
       <plugin>
@@ -22,6 +36,10 @@
                 <program>
                     <mainClass>OneOffProcess</mainClass>
                     <name>oneoff</name>
+                </program>
+                <program>
+                    <mainClass>TestPostOpenFn</mainClass>
+                    <name>testpost</name>                    
                 </program>
             </programs>
           </configuration>
