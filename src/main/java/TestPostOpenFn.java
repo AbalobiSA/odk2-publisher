@@ -31,6 +31,7 @@ import org.opendatakit.wink.client.WinkClient;
 
 public class TestPostOpenFn
 {
+    public static String lastPullTimestamp;
 /*
     private static void postToOpenFn(JSONObject obj)
     {
@@ -101,7 +102,7 @@ public class TestPostOpenFn
         URL url;
         String host;
     
-           
+
         //String colName = "seq_num";
         //String colKey = "seq_num";
         //String colType = "string";
@@ -112,7 +113,10 @@ public class TestPostOpenFn
         
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
         Date date = new Date(0);
-        String startTime = dateFormat.format(date); 
+        String startTime = dateFormat.format(date);
+
+        System.out.println("Date used is: " + date);
+        System.out.println("Start time: " + startTime);
         
         int sizeOfSeqTable = 50;
 
@@ -163,6 +167,7 @@ public class TestPostOpenFn
             System.out.println("Found " + rowsObj.size() + " new rows.");
             if (rowsObj.size() > 0)
             {
+                //Run through all entries, and get the last
                 System.out.println("JSON[0]:");
                 System.out.println(rowsObj.getJSONObject(0).toString());
             }
@@ -180,7 +185,12 @@ public class TestPostOpenFn
           e.printStackTrace();
         }
     }
-  
+
+    public static JSONArray getTableItems(){
+        
+    }
+
+
     public static void main(String[] args)
     {    
         testCheckForNewRows();
