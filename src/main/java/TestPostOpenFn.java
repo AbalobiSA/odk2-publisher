@@ -89,19 +89,32 @@ public class TestPostOpenFn
     Examples in WinkClientTest.java
     
     */
-    public static void testCheckForNewRows() {
+
+
+
+    public static void main(String[] args)
+    {    
+        testCheckForNewRows();
     
+    /*  JSONObject obj = new JSONObject();  
+        obj.put("source", "ODK2 Test Publisher");
+        obj.put("data", "Add some data here...");
+        postToOpenFn(obj); 
+    */
+    }
+    private static void testCheckForNewRows() {
+
         String agg_url = "https://abalobi2-0.appspot.com/";
         String appId = "odktables/default";
         String testTableId = "catch_test";
         String userName = "publisher";
         String password = "tmfUT5FCNdA43pM8dR3y";
         String version = "2";
-        int batchSize = 1000;    
-    
+        int batchSize = 1000;
+
         URL url;
         String host;
-    
+
 
         //String colName = "seq_num";
         //String colKey = "seq_num";
@@ -110,28 +123,28 @@ public class TestPostOpenFn
         //String testTableSchemaETag = "createRowsForQueryTest";
         String tableSchemaETag = null;
         //String listOfChildElements = "[]";
-        
+
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
         Date date = new Date(0);
         String startTime = dateFormat.format(date);
 
         System.out.println("Date used is: " + date);
         System.out.println("Start time: " + startTime);
-        
+
         int sizeOfSeqTable = 50;
 
         try {
-          System.out.println("Initialising WinkClient...");
-          
-          url = new URL(agg_url);
-          host = url.getHost(); 
-        
-          WinkClient wc = new WinkClient();
-          wc.init(host, userName, password);
-          tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, testTableId);
-          System.out.println("SchemaETag: " + tableSchemaETag);
-          System.out.println();
-          
+            System.out.println("Initialising WinkClient...");
+
+            url = new URL(agg_url);
+            host = url.getHost();
+
+            WinkClient wc = new WinkClient();
+            wc.init(host, userName, password);
+            tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, testTableId);
+            System.out.println("SchemaETag: " + tableSchemaETag);
+            System.out.println();
+
 
           /*  Adds new rows (from WinkClient test code)
           ArrayList<Column> columns = new ArrayList<Column>();
@@ -156,52 +169,39 @@ public class TestPostOpenFn
 
           wc.createRowsUsingBulkUpload(agg_url, appId, testTableId, tableSchemaETag, rowList, 0);
           */
-        
-          System.out.println("Querying Aggregate (" + agg_url + ") with user " +  userName + "...");
-          JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, testTableId, tableSchemaETag, startTime, null, null, null);
-          System.out.println("Done querying, checking result");
-          
-          if (res.containsKey("rows")) {
-            JSONArray rowsObj = res.getJSONArray("rows");
-            //assertEquals(rowsObj.size(), sizeOfSeqTable);
-            System.out.println("Found " + rowsObj.size() + " new rows.");
-            if (rowsObj.size() > 0)
-            {
-                //Run through all entries, and get the last
-                System.out.println("JSON[0]:");
-                System.out.println(rowsObj.getJSONObject(0).toString());
-            }
-            
-          }
-          else {
-            System.out.println("No 'rows' found in result");
-          }
 
-          //wc.deleteTableDefinition(agg_url, appId, testTableId, tableSchemaETag);
-          
-          wc.close();
+            System.out.println("Querying Aggregate (" + agg_url + ") with user " +  userName + "...");
+            JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, testTableId, tableSchemaETag, startTime, null, null, null);
+            System.out.println("Done querying, checking result");
+
+            if (res.containsKey("rows")) {
+                JSONArray rowsObj = res.getJSONArray("rows");
+                //assertEquals(rowsObj.size(), sizeOfSeqTable);
+                System.out.println("Found " + rowsObj.size() + " new rows.");
+                if (rowsObj.size() > 0)
+                {
+                    //Run through all entries, and get the last
+                    System.out.println("JSON[0]:");
+                    System.out.println(rowsObj.getJSONObject(0).toString());
+                }
+
+            }
+            else {
+                System.out.println("No 'rows' found in result");
+            }
+
+            //wc.deleteTableDefinition(agg_url, appId, testTableId, tableSchemaETag);
+
+            wc.close();
 
         } catch (Exception e) {
-          e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
-    public static JSONArray getTableItems(){
-        
+    public static JSONArray getTableItems(String tableID){
+        return new JSONArray();
     }
-
-
-    public static void main(String[] args)
-    {    
-        testCheckForNewRows();
-    
-    /*  JSONObject obj = new JSONObject();  
-        obj.put("source", "ODK2 Test Publisher");
-        obj.put("data", "Add some data here...");
-        postToOpenFn(obj); 
-    */
-    }
-
     
     
 }
