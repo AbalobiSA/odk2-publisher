@@ -9,6 +9,7 @@ https://dashboard.heroku.com/apps/odk2-publisher
 
 ### Repo Syncing
 This repo is stored in two locations.
+
 1. [Heroku](https://dashboard.heroku.com/apps/odk2-publisher)
 2. [Github](https://github.com/AbalobiSA/odk2-publisher)
 
