@@ -63,6 +63,9 @@ public class TestPostOpenFn
     private static String userName = "carl";
     private static String password = "carlcarlcarl";
     private static String version = "2";
+    private static String POST_URL = "http://197.85.186.65:8080";
+//    private static String POST_URL = "https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e";
+    //https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e
 
     //TO BE REMOVED
     private static String testTableId = "catch_test";
@@ -83,8 +86,12 @@ public class TestPostOpenFn
 
         System.out.println("LATEST DATE: " + lastPullTimestamp);
 
-        postToOpenFn(objMonitor);
-
+//        postToOpenFn(objMonitor);
+        try {
+            realPostToOpenFn(objMonitor);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 //        prettyPrint(rowsTrip);
 //        System.out.println("DEBUG DATA: " + prettyPrint(objTrip));
 
@@ -372,8 +379,8 @@ public class TestPostOpenFn
         */
     }
 
-    private static void realPostToOpenFn(JSONObject obj){
-
+    private static void realPostToOpenFn(JSONObject obj) throws Exception{
+        
     }
 
     // Utility Methods
