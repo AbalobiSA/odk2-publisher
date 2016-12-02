@@ -8,10 +8,12 @@ import java.util.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.net.URL;
+import java.util.Locale;
 
 import jdk.nashorn.internal.parser.JSONParser;
 //import org.apache.wink.json4j.*;
 import org.apache.wink.json4j.JSONArray;
+import org.apache.wink.json4j.JSONException;
 import org.apache.wink.json4j.JSONObject;
 
 
@@ -26,6 +28,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.entity.StringEntity;
+import org.joda.time.*;
+//import ;
 
 //import org.json.JSONException;
 //import org.json.JSONObject;
@@ -39,7 +43,7 @@ public class TestPostOpenFn
 
         These will be queried by all methods below.
      */
-    private static String lastPullTimestamp = "";
+    private static DateTime lastPullTimestamp = new DateTime(0);
     private static String agg_url = "https://abalobi-monitor.appspot.com/";
     private static String appId = "odktables/default";
     private static String userName = "carl";
@@ -63,16 +67,13 @@ public class TestPostOpenFn
         JSONObject objCatch = createPayload(rowsCatch);
         JSONObject objSample = createPayload(rowsSample);
 
-        postToOpenFn(objMonitor);
+        System.out.println("LATEST DATE: " + lastPullTimestamp);
+
+//        postToOpenFn(objMonitor);
 
 //        prettyPrint(rowsTrip);
-        System.out.println(jsonArrayToString(rowsTrip));
+        System.out.println("DEBUG DATA: " + prettyPrint(objTrip));
 
-    /*  JSONObject obj = new JSONObject();  
-        obj.put("source", "ODK2 Test Publisher");
-        obj.put("data", "Add some data here...");
-        postToOpenFn(obj);
-    */
     }
     private static void testCheckForNewRows() {
 
@@ -164,6 +165,7 @@ public class TestPostOpenFn
         }
     }
 
+    //Queries the database and fetches new entries
     public static JSONArray getTableItems(String tableID){
 
         JSONArray returnMe;
@@ -236,62 +238,9 @@ public class TestPostOpenFn
         return new JSONArray();
     }
 
-    //Print an entire JSON array to console
-    public static void prettyPrint(JSONArray printMe){
-
-        if (printMe.size() != 0){
-            for (int i = 0; i < printMe.size(); i++){
-                try{
-                    try{
-                        System.out.println(printMe.getJSONObject(i).toString(4));
-
-                    } catch (Exception e){
-                        e.printStackTrace();
-                    }
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-
-            }
-            System.out.println("ROWS FOUND!");
-        }
-    }
-
-    //Return a String of a JSON array
-    public static String jsonArrayToString(JSONArray printMe){
-
-        JSONObject returnMe = new JSONObject();
-        //Set the source
-        try{
-            returnMe.put("source", printMe.getJSONObject(0).getString("formId"));
-        } catch (Exception e){
-            e.printStackTrace();
-        }
-        if (printMe.size() != 0){
-            for (int i = 0; i < printMe.size(); i++){
-                try{
-                    try{
-                        returnMe.put("data", (printMe));
-
-                    } catch (Exception e){
-                        e.printStackTrace();
-                        return "";
-                    }
-                } catch (Exception e){
-                    e.printStackTrace();
-                    return "";
-                }
-
-            }
-            return returnMe.toString();
-        } else{
-            return "";
-        }
-    }
-
     /*
         Description: Return an Object of a JSON Array, ready to sent through to OpenFn.
-        Note: This method will inject the 'source' and ''
+        Note: This method will inject the 'source' and 'data'
 
      */
     public static JSONObject createPayload(JSONArray printMe){
@@ -306,18 +255,32 @@ public class TestPostOpenFn
 
         //If not empty, create the full array
         if (printMe.size() != 0){
+
+            //Create date parser
+            SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS", Locale.ENGLISH);
+//            SimpleDateFormat parser = new SimpleDateFormat("2016-09-23'T'11:39:10.774000000");
+
+            //Run through the array
             for (int i = 0; i < printMe.size(); i++){
                 try{
-                    try{
-                        returnMe.put("data", (printMe));
+                    String dateFromJSON = printMe.getJSONObject(i).getString("savepointTimestamp");
+//                    System.out.println(dateFromJSON);
+//                    Date compareMe = parser.parse(dateFromJSON);
+                    DateTime compareMe = new DateTime( dateFromJSON ) ;
+                    System.out.println(compareMe + " PARSED FROM " + dateFromJSON);
 
-                    } catch (Exception e){
-                        e.printStackTrace();
-//                        return "";
-                    }
+                    compareLatestDate(compareMe);
+
                 } catch (Exception e){
                     e.printStackTrace();
-//                    return "";
+
+                }
+
+
+                try{
+                    returnMe.put("data", (printMe));
+                } catch (Exception e){
+                    e.printStackTrace();
                 }
 
             }
@@ -326,10 +289,6 @@ public class TestPostOpenFn
             return returnMe;
         }
     }
-
-
-
-
 
     private static void postToOpenFn(JSONObject obj)
     {
@@ -388,7 +347,63 @@ public class TestPostOpenFn
         */
     }
 
+    // Utility Methods
 
+    //Return a String of a JSON array
+    public static String jsonArrayToString(JSONArray printMe){
+
+        JSONObject returnMe = new JSONObject();
+        //Set the source
+        try{
+            returnMe.put("source", printMe.getJSONObject(0).getString("formId"));
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        if (printMe.size() != 0){
+            for (int i = 0; i < printMe.size(); i++){
+                try{
+                    try{
+                        returnMe.put("data", (printMe));
+
+                    } catch (Exception e){
+                        e.printStackTrace();
+                        return "";
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
+                    return "";
+                }
+
+            }
+            return returnMe.toString();
+        } else{
+            return "";
+        }
+    }
+
+    //Updates the global latest date
+    public static void compareLatestDate(DateTime sentDate){
+
+        if (sentDate.compareTo(lastPullTimestamp) > 0){
+            lastPullTimestamp = sentDate;
+//            System.out.println("REPLACING " + lastPullTimestamp + " WITH " + sentDate);
+        }
+
+//        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
+//        Date date = new Date(0);
+//        String startTime = dateFormat.format(date);
+    }
+
+    //Print an entire JSON array to console
+    public static String prettyPrint(JSONObject printMe){
+        String returnMe = null;
+        try {
+            returnMe = printMe.toString(4);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return returnMe;
+    }
 
 
     

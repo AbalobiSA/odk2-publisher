@@ -17,5 +17,6 @@
     <orderEntry type="library" name="Maven: org.opendatakit.aggregate.odktables:rest:2014-11-24" level="project" />
     <orderEntry type="library" name="Maven: org.opendatakit.wink:client:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.apache.wink:wink-json4j:1.4" level="project" />
+    <orderEntry type="library" name="Maven: joda-time:joda-time:2.9.6" level="project" />
   </component>
 </module>
