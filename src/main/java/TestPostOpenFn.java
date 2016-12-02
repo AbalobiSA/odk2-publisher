@@ -1,6 +1,8 @@
 //import org.apache.http.*;
 //import org.apache.http.HttpEntity;
 
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
@@ -29,6 +31,18 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.entity.StringEntity;
 import org.joda.time.*;
+
+import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 //import ;
 
 //import org.json.JSONException;
@@ -69,10 +83,10 @@ public class TestPostOpenFn
 
         System.out.println("LATEST DATE: " + lastPullTimestamp);
 
-//        postToOpenFn(objMonitor);
+        postToOpenFn(objMonitor);
 
 //        prettyPrint(rowsTrip);
-        System.out.println("DEBUG DATA: " + prettyPrint(objTrip));
+//        System.out.println("DEBUG DATA: " + prettyPrint(objTrip));
 
     }
     private static void testCheckForNewRows() {
@@ -292,6 +306,17 @@ public class TestPostOpenFn
 
     private static void postToOpenFn(JSONObject obj)
     {
+        try {
+            // configure the SSLContext with a TrustManager
+            SSLContext ctx = SSLContext.getInstance("TLS");
+            ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
+            SSLContext.setDefault(ctx);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+
 
         CloseableHttpClient httpclient = HttpClients.createDefault();
         try {
@@ -345,6 +370,10 @@ public class TestPostOpenFn
         Examples in WinkClientTest.java
 
         */
+    }
+
+    private static void realPostToOpenFn(JSONObject obj){
+
     }
 
     // Utility Methods
@@ -403,6 +432,20 @@ public class TestPostOpenFn
             e.printStackTrace();
         }
         return returnMe;
+    }
+
+    private static class DefaultTrustManager implements X509TrustManager {
+
+//        @Override
+        public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+//        @Override
+        public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+//        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
     }
 
 
