@@ -73,8 +73,8 @@ public class TestPostOpenFn
 
         These will be queried by all methods below.
      */
-    private static DateTime lastPullTimestamp = new DateTime(0); //Modify this to read from file in main method
-    private static DateTime newTimeStamp = lastPullTimestamp;
+    private static DateTime lastPullTimestamp = new DateTime(0);
+    private static DateTime newTimeStamp;
     private static String agg_url = "https://abalobi-monitor.appspot.com/";
     private static String appId = "odktables/default";
     private static String userName = "carl";
@@ -82,7 +82,6 @@ public class TestPostOpenFn
     private static String version = "2";
 //    private static String POST_URL = "http://197.85.186.65:8080";
     private static String POST_URL = "https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e";
-    //https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e
 
     //TO BE REMOVED
     private static String testTableId = "catch_test";
@@ -90,34 +89,43 @@ public class TestPostOpenFn
 
     public static void main(String[] args)
     {
-        lastPullTimestamp = new DateTime( System.currentTimeMillis() );
+        //TODO: Modify this to read in from file
+//        lastPullTimestamp = readTimeStampFromFile(TIMESTAMP_FILE);
+        lastPullTimestamp = new DateTime( /*System.currentTimeMillis()*/0 );
+
+        //This is what will eventually be stored as the last query date.
+        //newTimeStamp gets set as the last occurring date in any of the records.
+        newTimeStamp = lastPullTimestamp;
+
+        //After reading from file, this global will be used to query all the records.
         System.out.println("INITIAL DATE USED FROM ARGS: " + lastPullTimestamp);
 
+        //Query the tables based on global arguments, and store each table full of new rows, in a JSON array.
         JSONArray rowsMonitor = getTableItems("abalobi_monitor");
         JSONArray rowsTrip = getTableItems("abalobi_boat");
         JSONArray rowsCatch = getTableItems("abalobi_catch");
         JSONArray rowsSample = getTableItems("abalobi_sample");
 
+        //Create a JSON object with an array containing all new records
+        //Note: Each of these will try to compete for the latest date.
         JSONObject objMonitor = createPayload(rowsMonitor);
         JSONObject objTrip = createPayload(rowsTrip);
         JSONObject objCatch = createPayload(rowsCatch);
         JSONObject objSample = createPayload(rowsSample);
 
+        //Modify this to write to file
         System.out.println("LATEST DATE: " + newTimeStamp);
+        //writeTimeStampToFile(newTimeStamp);
 
-
-        //Post these objects to openfunction
+        //Finally, send all these JSON records to OpenFunction.
         try {
             realPostToOpenFn(objMonitor);
-//            realPostToOpenFn(objTrip);
-//            realPostToOpenFn(objCatch);
-//            realPostToOpenFn(objSample);
+            realPostToOpenFn(objTrip);
+            realPostToOpenFn(objCatch);
+            realPostToOpenFn(objSample);
         } catch (Exception e) {
             e.printStackTrace();
         }
-//        prettyPrint(rowsTrip);
-//        System.out.println("DEBUG DATA: " + prettyPrint(objTrip));
-
     }
     private static void testCheckForNewRows() {
 
@@ -221,9 +229,9 @@ public class TestPostOpenFn
         Date date = new Date(0);
 
         //This should be the last
-        String startTime = dateFormat.format(date);
+        String startTime = lastPullTimestamp.toString();
 
-        System.out.println("Date used is: " + date);
+        System.out.println("Date used is: " + lastPullTimestamp);
         System.out.println("Start time: " + startTime);
 
         int sizeOfSeqTable = 50;
@@ -291,12 +299,17 @@ public class TestPostOpenFn
      */
     public static JSONObject createPayload(JSONArray printMe){
 
+        //Start building a JSON object in order to return later.
         JSONObject returnMe = new JSONObject();
-        //Set the source
+
+        //Set the first key, 'source', as the table name from the JSON.
+        //Note: If this is empty, there will be no new rows. This is handled in the post method.
         try{
             returnMe.put("source", printMe.getJSONObject(0).getString("formId"));
+            returnMe.put("filter", "odk_2_publisher_heroku");
         } catch (Exception e){
-            e.printStackTrace();
+//            e.printStackTrace();
+            System.out.println("Unable to create payload, no new rows found!");
         }
 
         //If not empty, create the full array
@@ -309,29 +322,29 @@ public class TestPostOpenFn
             //Run through the array
             for (int i = 0; i < printMe.size(); i++){
                 try{
+                    //Get the date entry of the current object in the row, as a string.
                     String dateFromJSON = printMe.getJSONObject(i).getString("savepointTimestamp");
-//                    System.out.println(dateFromJSON);
-//                    Date compareMe = parser.parse(dateFromJSON);
-                    DateTime compareMe = new DateTime( dateFromJSON ) ;
-                    System.out.println(compareMe + " PARSED FROM " + dateFromJSON);
 
+                    //Convert the date string to a DateTime object from the JodaTime library.
+                    DateTime compareMe = new DateTime( dateFromJSON ) ;
+
+                    //Set the date as the latest date, if applicable.
                     compareLatestDate(compareMe);
 
                 } catch (Exception e){
                     e.printStackTrace();
-
                 }
-
-
                 try{
+                    //Add the current data entry as an object in the 'data' array, in the JSON
                     returnMe.put("data", (printMe));
                 } catch (Exception e){
-                    e.printStackTrace();
+                    System.out.println("Unable to create payload, no new rows found! 2");
                 }
 
             }
             return returnMe;
         } else{
+            //Return an empty object, to be handled in another method.
             return returnMe;
         }
     }
@@ -416,41 +429,47 @@ public class TestPostOpenFn
 //                .header().back();
         SSLUtilities.trustAllHostnames();
         SSLUtilities.trustAllHttpsCertificates();
-        System.out.println("Creating post request...");
 
-        String httpsURL = POST_URL;
+        if (obj.size() > 0){
+            System.out.println("Creating post request...");
 
-        URL myurl = new URL(httpsURL);
-        HttpsURLConnection con = (HttpsURLConnection)myurl.openConnection();
-        con.setRequestMethod("POST");
+            String httpsURL = POST_URL;
+
+            URL myurl = new URL(httpsURL);
+            HttpsURLConnection con = (HttpsURLConnection)myurl.openConnection();
+            con.setRequestMethod("POST");
 //        con.setRequestProperty("data", "test");
 
 //        con.setRequestProperty("Content-length", String.valueOf(query.length()));
-        con.setRequestProperty("Content-Type","application/json");
-        con.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0;Windows98;DigExt)");
-        con.setDoOutput(true);
-        con.setDoInput(true);
+            con.setRequestProperty("Content-Type","application/json");
+            con.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0;Windows98;DigExt)");
+            con.setDoOutput(true);
+            con.setDoInput(true);
 
-        DataOutputStream output = new DataOutputStream(con.getOutputStream());
+            DataOutputStream output = new DataOutputStream(con.getOutputStream());
 
 //        StringEntity params =new StringEntity(obj.toString());
-        output.writeBytes(obj.toString());
+            output.writeBytes(obj.toString());
 
 
 //        output.writeBytes(query);
 
-        output.close();
+            output.close();
 
-        DataInputStream input = new DataInputStream( con.getInputStream() );
+            DataInputStream input = new DataInputStream( con.getInputStream() );
 
 
 
-        for( int c = input.read(); c != -1; c = input.read() )
-            System.out.print( (char)c );
-        input.close();
+            for( int c = input.read(); c != -1; c = input.read() )
+                System.out.print( (char)c );
+            input.close();
 
-        System.out.println("Resp Code:"+con .getResponseCode());
-        System.out.println("Resp Message:"+ con .getResponseMessage());
+            System.out.println("Resp Code:"+con .getResponseCode());
+            System.out.println("Resp Message:"+ con .getResponseMessage());
+        } else{
+            System.out.println("No data in current JSON, skipping post...");
+        }
+
     }
 
     // Utility Methods
@@ -500,7 +519,7 @@ public class TestPostOpenFn
 //        String startTime = dateFormat.format(date);
     }
 
-    //Print an entire JSON array to console
+    //Print an entire JSON object to console
     public static String prettyPrint(JSONObject printMe){
         String returnMe = null;
         try {
