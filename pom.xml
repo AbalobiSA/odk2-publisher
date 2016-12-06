@@ -39,11 +39,38 @@
         <artifactId>wink-json4j</artifactId>
         <version>1.4</version>
     </dependency>
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.9.6</version>
+    </dependency>
+    <dependency>
+      <groupId>com.jcabi</groupId>
+      <artifactId>jcabi-http</artifactId>
+      <version>1.16</version>
+    </dependency>
       <dependency>
-          <groupId>joda-time</groupId>
-          <artifactId>joda-time</artifactId>
-          <version>2.9.6</version>
+          <groupId>com.sun.jersey</groupId>
+          <artifactId>jersey-client</artifactId>
+          <version>1.19</version>
       </dependency>
+      <dependency>
+          <groupId>javax.json</groupId>
+          <artifactId>javax.json-api</artifactId>
+          <version>1.0</version>
+      </dependency>
+      <dependency>
+          <groupId>org.glassfish</groupId>
+          <artifactId>javax.json</artifactId>
+          <version>1.0.4</version>
+      </dependency>
+      <!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest-all -->
+      <dependency>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>java-hamcrest</artifactId>
+          <version>2.0.0.0</version>
+      </dependency>
+
   </dependencies>
   
   

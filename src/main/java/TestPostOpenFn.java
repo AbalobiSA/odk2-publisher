@@ -1,6 +1,9 @@
 //import org.apache.http.*;
 //import org.apache.http.HttpEntity;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.URLEncoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -12,8 +15,19 @@ import java.text.SimpleDateFormat;
 import java.net.URL;
 import java.util.Locale;
 
+//import org.slf4j.impl.StaticLoggerBinder;
+
+import com.jcabi.http.Request;
+import com.jcabi.http.Response;
+import com.jcabi.http.request.ApacheRequest;
+import com.jcabi.http.request.JdkRequest;
+import com.jcabi.http.response.RestResponse;
 import jdk.nashorn.internal.parser.JSONParser;
 //import org.apache.wink.json4j.*;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.wink.json4j.JSONArray;
 import org.apache.wink.json4j.JSONException;
 import org.apache.wink.json4j.JSONObject;
@@ -43,12 +57,14 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.core.MediaType;
 //import ;
 
 //import org.json.JSONException;
 //import org.json.JSONObject;
 
 import org.opendatakit.wink.client.WinkClient;
+import sun.net.www.protocol.http.HttpURLConnection;
 
 public class TestPostOpenFn
 {
@@ -380,7 +396,98 @@ public class TestPostOpenFn
     }
 
     private static void realPostToOpenFn(JSONObject obj) throws Exception{
-        
+//        String html = new ApacheRequest("https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e")
+////                .uri().path("/users").queryParam("id", 333).back()
+//                .method(Request.POST)
+//                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+//                .fetch()
+//                .as(RestResponse.class)
+////                .assertStatus(HttpURLConnection.HTTP_OK)
+//                .body()
+//                .header().back();
+        SSLUtilities.trustAllHostnames();
+        SSLUtilities.trustAllHttpsCertificates();
+        System.out.println("Creating post request...");
+
+//        Response response = new JdkRequest("http://197.85.186.65:8080")
+//
+//                .uri().path("").back()
+//                .method(Request.POST)
+//                .body()
+//                .formParam("actualdata", obj)
+////                .formParam("department", "IT")
+//                .back()
+////                .header("Content-Type", "application/json")
+//                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+////                .header("User-Agent", "My Custom App")
+//                .fetch();
+//
+//        System.out.println(obj.toString());
+//
+//        System.out.println("Printing POST request...");
+//        System.out.println(response);
+
+        //SECOND ATTEMPT
+//        HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
+//
+//        try {
+//            HttpPost request = new HttpPost("https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e");
+//            StringEntity params =new StringEntity(obj.toString());
+//            request.addHeader("content-type", "application/json");
+//            request.setEntity(params);
+//            SSLUtilities.trustAllHostnames();
+//            SSLUtilities.trustAllHttpsCertificates();
+//            HttpResponse response = httpClient.execute(request);
+//            System.out.println(response);
+//
+//            // handle response here...
+//        }catch (Exception ex) {
+//            // handle exception here
+//            ex.printStackTrace();
+//        } finally {
+//            httpClient.getConnectionManager().shutdown(); //Deprecated
+//        }
+
+//        System.out.println(html);
+
+        //THIRD ATTEMPT
+        String httpsURL = "https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e";
+
+//        String query = "email="+ URLEncoder.encode("abc@xyz.com","UTF-8");
+//        query += "&";
+//        query += "password="+URLEncoder.encode("abcd","UTF-8") ;
+
+        URL myurl = new URL(httpsURL);
+        HttpsURLConnection con = (HttpsURLConnection)myurl.openConnection();
+        con.setRequestMethod("POST");
+//        con.setRequestProperty("data", "test");
+
+//        con.setRequestProperty("Content-length", String.valueOf(query.length()));
+        con.setRequestProperty("Content-Type","application/json");
+        con.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0;Windows98;DigExt)");
+        con.setDoOutput(true);
+        con.setDoInput(true);
+
+        DataOutputStream output = new DataOutputStream(con.getOutputStream());
+
+//        StringEntity params =new StringEntity(obj.toString());
+        output.writeBytes(obj.toString());
+
+
+//        output.writeBytes(query);
+
+        output.close();
+
+        DataInputStream input = new DataInputStream( con.getInputStream() );
+
+
+
+        for( int c = input.read(); c != -1; c = input.read() )
+            System.out.print( (char)c );
+        input.close();
+
+        System.out.println("Resp Code:"+con .getResponseCode());
+        System.out.println("Resp Message:"+ con .getResponseMessage());
     }
 
     // Utility Methods

@@ -18,5 +18,19 @@
     <orderEntry type="library" name="Maven: org.opendatakit.wink:client:1.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.apache.wink:wink-json4j:1.4" level="project" />
     <orderEntry type="library" name="Maven: joda-time:joda-time:2.9.6" level="project" />
+    <orderEntry type="library" name="Maven: com.jcabi:jcabi-http:1.16" level="project" />
+    <orderEntry type="library" name="Maven: com.jcabi:jcabi-immutable:1.4" level="project" />
+    <orderEntry type="library" name="Maven: com.jcabi:jcabi-aspects:0.22.2" level="project" />
+    <orderEntry type="library" name="Maven: org.aspectj:aspectjrt:1.8.4" level="project" />
+    <orderEntry type="library" name="Maven: javax.validation:validation-api:1.1.0.Final" level="project" />
+    <orderEntry type="library" name="Maven: com.jcabi:jcabi-log:0.17" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.5" level="project" />
+    <orderEntry type="library" name="Maven: com.jcabi:jcabi-manifests:1.1" level="project" />
+    <orderEntry type="library" name="Maven: com.sun.jersey:jersey-client:1.19" level="project" />
+    <orderEntry type="library" name="Maven: com.sun.jersey:jersey-core:1.19" level="project" />
+    <orderEntry type="library" name="Maven: javax.ws.rs:jsr311-api:1.1.1" level="project" />
+    <orderEntry type="library" name="Maven: javax.json:javax.json-api:1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.glassfish:javax.json:1.0.4" level="project" />
+    <orderEntry type="library" name="Maven: org.hamcrest:java-hamcrest:2.0.0.0" level="project" />
   </component>
 </module>
