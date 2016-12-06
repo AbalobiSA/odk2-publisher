@@ -74,6 +74,7 @@ public class TestPostOpenFn
         These will be queried by all methods below.
      */
     private static DateTime lastPullTimestamp = new DateTime(0); //Modify this to read from file in main method
+    private static DateTime newTimeStamp = lastPullTimestamp;
     private static String agg_url = "https://abalobi-monitor.appspot.com/";
     private static String appId = "odktables/default";
     private static String userName = "carl";
@@ -89,6 +90,8 @@ public class TestPostOpenFn
 
     public static void main(String[] args)
     {
+        lastPullTimestamp = new DateTime( System.currentTimeMillis() );
+        System.out.println("INITIAL DATE USED FROM ARGS: " + lastPullTimestamp);
 
         JSONArray rowsMonitor = getTableItems("abalobi_monitor");
         JSONArray rowsTrip = getTableItems("abalobi_boat");
@@ -100,12 +103,15 @@ public class TestPostOpenFn
         JSONObject objCatch = createPayload(rowsCatch);
         JSONObject objSample = createPayload(rowsSample);
 
-        System.out.println("LATEST DATE: " + lastPullTimestamp);
+        System.out.println("LATEST DATE: " + newTimeStamp);
 
 
-
+        //Post these objects to openfunction
         try {
             realPostToOpenFn(objMonitor);
+//            realPostToOpenFn(objTrip);
+//            realPostToOpenFn(objCatch);
+//            realPostToOpenFn(objSample);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -484,8 +490,8 @@ public class TestPostOpenFn
     //Updates the global latest date
     public static void compareLatestDate(DateTime sentDate){
 
-        if (sentDate.compareTo(lastPullTimestamp) > 0){
-            lastPullTimestamp = sentDate;
+        if (sentDate.compareTo(newTimeStamp) > 0){
+            newTimeStamp = sentDate;
 //            System.out.println("REPLACING " + lastPullTimestamp + " WITH " + sentDate);
         }
 
