@@ -73,14 +73,14 @@ public class TestPostOpenFn
 
         These will be queried by all methods below.
      */
-    private static DateTime lastPullTimestamp = new DateTime(0);
+    private static DateTime lastPullTimestamp = new DateTime(0); //Modify this to read from file in main method
     private static String agg_url = "https://abalobi-monitor.appspot.com/";
     private static String appId = "odktables/default";
     private static String userName = "carl";
     private static String password = "carlcarlcarl";
     private static String version = "2";
-    private static String POST_URL = "http://197.85.186.65:8080";
-//    private static String POST_URL = "https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e";
+//    private static String POST_URL = "http://197.85.186.65:8080";
+    private static String POST_URL = "https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e";
     //https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e
 
     //TO BE REMOVED
@@ -89,7 +89,7 @@ public class TestPostOpenFn
 
     public static void main(String[] args)
     {
-//        testCheckForNewRows();
+
         JSONArray rowsMonitor = getTableItems("abalobi_monitor");
         JSONArray rowsTrip = getTableItems("abalobi_boat");
         JSONArray rowsCatch = getTableItems("abalobi_catch");
@@ -102,7 +102,8 @@ public class TestPostOpenFn
 
         System.out.println("LATEST DATE: " + lastPullTimestamp);
 
-//        postToOpenFn(objMonitor);
+
+
         try {
             realPostToOpenFn(objMonitor);
         } catch (Exception e) {
@@ -212,6 +213,8 @@ public class TestPostOpenFn
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
         Date date = new Date(0);
+
+        //This should be the last
         String startTime = dateFormat.format(date);
 
         System.out.println("Date used is: " + date);
@@ -409,53 +412,7 @@ public class TestPostOpenFn
         SSLUtilities.trustAllHttpsCertificates();
         System.out.println("Creating post request...");
 
-//        Response response = new JdkRequest("http://197.85.186.65:8080")
-//
-//                .uri().path("").back()
-//                .method(Request.POST)
-//                .body()
-//                .formParam("actualdata", obj)
-////                .formParam("department", "IT")
-//                .back()
-////                .header("Content-Type", "application/json")
-//                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
-////                .header("User-Agent", "My Custom App")
-//                .fetch();
-//
-//        System.out.println(obj.toString());
-//
-//        System.out.println("Printing POST request...");
-//        System.out.println(response);
-
-        //SECOND ATTEMPT
-//        HttpClient httpClient = HttpClientBuilder.create().build(); //Use this instead
-//
-//        try {
-//            HttpPost request = new HttpPost("https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e");
-//            StringEntity params =new StringEntity(obj.toString());
-//            request.addHeader("content-type", "application/json");
-//            request.setEntity(params);
-//            SSLUtilities.trustAllHostnames();
-//            SSLUtilities.trustAllHttpsCertificates();
-//            HttpResponse response = httpClient.execute(request);
-//            System.out.println(response);
-//
-//            // handle response here...
-//        }catch (Exception ex) {
-//            // handle exception here
-//            ex.printStackTrace();
-//        } finally {
-//            httpClient.getConnectionManager().shutdown(); //Deprecated
-//        }
-
-//        System.out.println(html);
-
-        //THIRD ATTEMPT
-        String httpsURL = "https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e";
-
-//        String query = "email="+ URLEncoder.encode("abc@xyz.com","UTF-8");
-//        query += "&";
-//        query += "password="+URLEncoder.encode("abcd","UTF-8") ;
+        String httpsURL = POST_URL;
 
         URL myurl = new URL(httpsURL);
         HttpsURLConnection con = (HttpsURLConnection)myurl.openConnection();
