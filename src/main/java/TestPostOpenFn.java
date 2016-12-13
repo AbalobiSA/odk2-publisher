@@ -1,70 +1,33 @@
-//import org.apache.http.*;
-//import org.apache.http.HttpEntity;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.net.URLEncoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
-//import java.util.UUID;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.net.URL;
 import java.util.Locale;
-
-//import org.slf4j.impl.StaticLoggerBinder;
-
-import com.jcabi.http.Request;
-import com.jcabi.http.Response;
-import com.jcabi.http.request.ApacheRequest;
-import com.jcabi.http.request.JdkRequest;
-import com.jcabi.http.response.RestResponse;
-import jdk.nashorn.internal.parser.JSONParser;
-//import org.apache.wink.json4j.*;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.wink.json4j.JSONArray;
 import org.apache.wink.json4j.JSONException;
 import org.apache.wink.json4j.JSONObject;
-
-
 import org.apache.http.HttpEntity;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.entity.StringEntity;
 import org.joda.time.*;
-
-import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.ws.rs.core.MediaType;
-//import ;
-
-//import org.json.JSONException;
-//import org.json.JSONObject;
 
 import org.opendatakit.wink.client.WinkClient;
-import sun.net.www.protocol.http.HttpURLConnection;
 
 public class TestPostOpenFn
 {
