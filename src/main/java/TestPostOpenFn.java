@@ -1,6 +1,11 @@
 //import org.apache.http.*;
 //import org.apache.http.HttpEntity;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
@@ -8,7 +13,23 @@ import java.util.Date;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.net.URL;
+import java.util.Locale;
+
+//import org.slf4j.impl.StaticLoggerBinder;
+
+import com.jcabi.http.Request;
+import com.jcabi.http.Response;
+import com.jcabi.http.request.ApacheRequest;
+import com.jcabi.http.request.JdkRequest;
+import com.jcabi.http.response.RestResponse;
+import jdk.nashorn.internal.parser.JSONParser;
+//import org.apache.wink.json4j.*;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.wink.json4j.JSONArray;
+import org.apache.wink.json4j.JSONException;
 import org.apache.wink.json4j.JSONObject;
 
 
@@ -23,85 +44,96 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.entity.StringEntity;
+import org.joda.time.*;
+
+import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import javax.ws.rs.core.MediaType;
+//import ;
 
 //import org.json.JSONException;
 //import org.json.JSONObject;
 
 import org.opendatakit.wink.client.WinkClient;
+import sun.net.www.protocol.http.HttpURLConnection;
 
 public class TestPostOpenFn
 {
-/*
-    private static void postToOpenFn(JSONObject obj)
+    /*
+        GLOBAL VARIABLES
+
+        These will be queried by all methods below.
+     */
+    private static DateTime lastPullTimestamp = new DateTime(0);
+    private static DateTime newTimeStamp;
+    private static String agg_url = "https://abalobi-monitor.appspot.com/";
+    private static String appId = "odktables/default";
+    private static String userName = "carl";
+    private static String password = "carlcarlcarl";
+    private static String version = "2";
+//    private static String POST_URL = "http://197.85.186.65:8080";
+    private static String POST_URL = "https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e";
+
+    //TO BE REMOVED
+    private static String testTableId = "catch_test";
+
+
+    public static void main(String[] args)
     {
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-        try {            
-            System.out.println("Trying to POST to OpenFn...");
-            
-            //HttpPost httpPost = new HttpPost("http://requestb.in/1mo2tk51");
-            HttpPost httpPost = new HttpPost("https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e");
-           
-            httpPost.setHeader("Accept", "application/json");
-            httpPost.setHeader("Content-type", "application/json");
+        //TODO: Modify this to read in from file
+//        lastPullTimestamp = readTimeStampFromFile(TIMESTAMP_FILE);
+        lastPullTimestamp = new DateTime( /*System.currentTimeMillis()*/0 );
 
+        //This is what will eventually be stored as the last query date.
+        //newTimeStamp gets set as the last occurring date in any of the records.
+        newTimeStamp = lastPullTimestamp;
 
+        //After reading from file, this global will be used to query all the records.
+        System.out.println("INITIAL DATE USED FROM ARGS: " + lastPullTimestamp);
 
-            httpPost.setEntity(new StringEntity(obj.toString(), "UTF-8"));
+        //Query the tables based on global arguments, and store each table full of new rows, in a JSON array.
+        JSONArray rowsMonitor = getTableItems("abalobi_monitor");
+        JSONArray rowsTrip = getTableItems("abalobi_boat");
+        JSONArray rowsCatch = getTableItems("abalobi_catch");
+        JSONArray rowsSample = getTableItems("abalobi_sample");
 
-            CloseableHttpResponse response2 = httpclient.execute(httpPost);
+        //Create a JSON object with an array containing all new records
+        //Note: Each of these will try to compete for the latest date.
+        JSONObject objMonitor = createPayload(rowsMonitor);
+        JSONObject objTrip = createPayload(rowsTrip);
+        JSONObject objCatch = createPayload(rowsCatch);
+        JSONObject objSample = createPayload(rowsSample);
 
-            try {
-                System.out.println(response2.getStatusLine());
-                HttpEntity entity2 = response2.getEntity();
-                // do something useful with the response body
-                // and ensure it is fully consumed
-                EntityUtils.consume(entity2);
-            } finally {
-                response2.close();
-            }
-            
-            System.out.println("Done.");
-            
-        } catch(java.io.IOException e){
-           e.printStackTrace();
-           return;
-        } finally {
-            try {
-                httpclient.close();
-            } catch(java.io.IOException e){
-               e.printStackTrace();
-               return;
-            }
+        //Modify this to write to file
+        System.out.println("LATEST DATE: " + newTimeStamp);
+        //writeTimeStampToFile(newTimeStamp);
+
+        //Finally, send all these JSON records to OpenFunction.
+        try {
+            realPostToOpenFn(objMonitor);
+            realPostToOpenFn(objTrip);
+            realPostToOpenFn(objCatch);
+            realPostToOpenFn(objSample);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
-    
-    */
-    
-    /* Use these two functions from WinkClient.java:  
-    
-      public JSONObject queryRowsInTimeRangeWithLastUpdateDate(String uri, String appId, String tableId, String schemaETag,
-      String startTime, String endTime, String cursor, String fetchLimit) throws Exception 
-      
-        public JSONObject queryRowsInTimeRangeWithSavepointTimestamp(String uri, String appId, String tableId, String schemaETag,
-      String startTime, String endTime, String cursor, String fetchLimit) throws Exception
-    
-    Examples in WinkClientTest.java
-    
-    */
-    public static void testCheckForNewRows() {
-    
-        String agg_url = "https://abalobi2-0.appspot.com/";
-        String appId = "odktables/default";
-        String testTableId = "catch_test";
-        String userName = "publisher";
-        String password = "tmfUT5FCNdA43pM8dR3y";
-        String version = "2";
-        int batchSize = 1000;    
-    
+    private static void testCheckForNewRows() {
+
+        int batchSize = 1000;
+
         URL url;
         String host;
-    
-           
+
         //String colName = "seq_num";
         //String colKey = "seq_num";
         //String colType = "string";
@@ -109,25 +141,28 @@ public class TestPostOpenFn
         //String testTableSchemaETag = "createRowsForQueryTest";
         String tableSchemaETag = null;
         //String listOfChildElements = "[]";
-        
+
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
         Date date = new Date(0);
-        String startTime = dateFormat.format(date); 
-        
+        String startTime = dateFormat.format(date);
+
+        System.out.println("Date used is: " + date);
+        System.out.println("Start time: " + startTime);
+
         int sizeOfSeqTable = 50;
 
         try {
-          System.out.println("Initialising WinkClient...");
-          
-          url = new URL(agg_url);
-          host = url.getHost(); 
-        
-          WinkClient wc = new WinkClient();
-          wc.init(host, userName, password);
-          tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, testTableId);
-          System.out.println("SchemaETag: " + tableSchemaETag);
-          System.out.println();
-          
+            System.out.println("Initialising WinkClient...");
+
+            url = new URL(agg_url);
+            host = url.getHost();
+
+            WinkClient wc = new WinkClient();
+            wc.init(host, userName, password);
+            tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, testTableId);
+            System.out.println("SchemaETag: " + tableSchemaETag);
+            System.out.println();
+
 
           /*  Adds new rows (from WinkClient test code)
           ArrayList<Column> columns = new ArrayList<Column>();
@@ -152,46 +187,363 @@ public class TestPostOpenFn
 
           wc.createRowsUsingBulkUpload(agg_url, appId, testTableId, tableSchemaETag, rowList, 0);
           */
-        
-          System.out.println("Querying Aggregate (" + agg_url + ") with user " +  userName + "...");
-          JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, testTableId, tableSchemaETag, startTime, null, null, null);
-          System.out.println("Done querying, checking result");
-          
-          if (res.containsKey("rows")) {
-            JSONArray rowsObj = res.getJSONArray("rows");
-            //assertEquals(rowsObj.size(), sizeOfSeqTable);
-            System.out.println("Found " + rowsObj.size() + " new rows.");
-            if (rowsObj.size() > 0)
-            {
-                System.out.println("JSON[0]:");
-                System.out.println(rowsObj.getJSONObject(0).toString());
-            }
-            
-          }
-          else {
-            System.out.println("No 'rows' found in result");
-          }
 
-          //wc.deleteTableDefinition(agg_url, appId, testTableId, tableSchemaETag);
-          
-          wc.close();
+            System.out.println("Querying Aggregate (" + agg_url + ") with user " +  userName + "...");
+            JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, testTableId, tableSchemaETag, startTime, null, null, null);
+            System.out.println("Done querying, checking result");
+
+            if (res.containsKey("rows")) {
+                JSONArray rowsObj = res.getJSONArray("rows");
+                //assertEquals(rowsObj.size(), sizeOfSeqTable);
+                System.out.println("Found " + rowsObj.size() + " new rows.");
+                if (rowsObj.size() > 0)
+                {
+                    //Run through all entries, and get the last
+                    System.out.println("JSON[0]:");
+                    System.out.println(rowsObj.getJSONObject(0).toString());
+                }
+
+            }
+            else {
+                System.out.println("No 'rows' found in result");
+            }
+
+            //wc.deleteTableDefinition(agg_url, appId, testTableId, tableSchemaETag);
+
+            wc.close();
 
         } catch (Exception e) {
-          e.printStackTrace();
+            e.printStackTrace();
         }
     }
-  
-    public static void main(String[] args)
-    {    
-        testCheckForNewRows();
-    
-    /*  JSONObject obj = new JSONObject();  
-        obj.put("source", "ODK2 Test Publisher");
-        obj.put("data", "Add some data here...");
-        postToOpenFn(obj); 
-    */
+
+    //Queries the database and fetches new entries
+    public static JSONArray getTableItems(String tableID){
+
+        JSONArray returnMe;
+        URL url;
+        String host;
+        String tableSchemaETag = null;
+
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
+        Date date = new Date(0);
+
+        //This should be the last
+        String startTime = lastPullTimestamp.toString();
+
+        System.out.println("Date used is: " + lastPullTimestamp);
+        System.out.println("Start time: " + startTime);
+
+        int sizeOfSeqTable = 50;
+
+        try {
+            System.out.println("\nSelected Table: " + tableID);
+            System.out.println("Initialising WinkClient....");
+
+            /*
+                Set up settings using global variables
+             */
+            url = new URL(agg_url);
+            host = url.getHost();
+            WinkClient wc = new WinkClient();
+            wc.init(host, userName, password);
+            tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, tableID);
+            System.out.println("SchemaETag: " + tableSchemaETag);
+            System.out.println();
+
+            System.out.println("Querying Aggregate (" + agg_url + ") with user " +  userName + "...");
+            JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, tableID, tableSchemaETag, startTime, null, null, null);
+            System.out.println("Done querying, checking result");
+
+            if (res.containsKey("rows")) {
+                JSONArray rowsObj = res.getJSONArray("rows");
+                //assertEquals(rowsObj.size(), sizeOfSeqTable);
+                System.out.println("Found " + rowsObj.size() + " new rows.");
+                if (rowsObj.size() > 0)
+                {
+                    //Run through all entries, and get the last
+                    System.out.println("JSON[0]:");
+                    System.out.println(rowsObj.getJSONObject(0).toString());
+                }
+
+                wc.close();
+                return rowsObj;
+
+            }
+            else {
+                System.out.println("No 'rows' found in result");
+
+                wc.close();
+                return new JSONArray();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
+
+
+
+
+
+
+        return new JSONArray();
     }
 
-    
+    /*
+        Description: Return an Object of a JSON Array, ready to sent through to OpenFn.
+        Note: This method will inject the 'source' and 'data'
+
+     */
+    public static JSONObject createPayload(JSONArray printMe){
+
+        //Start building a JSON object in order to return later.
+        JSONObject returnMe = new JSONObject();
+
+        //Set the first key, 'source', as the table name from the JSON.
+        //Note: If this is empty, there will be no new rows. This is handled in the post method.
+        try{
+            returnMe.put("source", printMe.getJSONObject(0).getString("formId"));
+            returnMe.put("filter", "odk_2_publisher_heroku");
+        } catch (Exception e){
+//            e.printStackTrace();
+            System.out.println("Unable to create payload, no new rows found!");
+        }
+
+        //If not empty, create the full array
+        if (printMe.size() != 0){
+
+            //Create date parser
+            SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS", Locale.ENGLISH);
+//            SimpleDateFormat parser = new SimpleDateFormat("2016-09-23'T'11:39:10.774000000");
+
+            //Run through the array
+            for (int i = 0; i < printMe.size(); i++){
+                try{
+                    //Get the date entry of the current object in the row, as a string.
+                    String dateFromJSON = printMe.getJSONObject(i).getString("savepointTimestamp");
+
+                    //Convert the date string to a DateTime object from the JodaTime library.
+                    DateTime compareMe = new DateTime( dateFromJSON ) ;
+
+                    //Set the date as the latest date, if applicable.
+                    compareLatestDate(compareMe);
+
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+                try{
+                    //Add the current data entry as an object in the 'data' array, in the JSON
+                    returnMe.put("data", (printMe));
+                } catch (Exception e){
+                    System.out.println("Unable to create payload, no new rows found! 2");
+                }
+
+            }
+            return returnMe;
+        } else{
+            //Return an empty object, to be handled in another method.
+            return returnMe;
+        }
+    }
+
+    private static void postToOpenFn(JSONObject obj)
+    {
+        try {
+            // configure the SSLContext with a TrustManager
+            SSLContext ctx = SSLContext.getInstance("TLS");
+            ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
+            SSLContext.setDefault(ctx);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
+
+
+        CloseableHttpClient httpclient = HttpClients.createDefault();
+        try {
+            System.out.println("Trying to POST to OpenFn...");
+
+            //HttpPost httpPost = new HttpPost("http://requestb.in/1mo2tk51");
+            HttpPost httpPost = new HttpPost("https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e");
+
+            httpPost.setHeader("Accept", "application/json");
+            httpPost.setHeader("Content-type", "application/json");
+
+
+
+            httpPost.setEntity(new StringEntity(obj.toString(), "UTF-8"));
+
+            CloseableHttpResponse response2 = httpclient.execute(httpPost);
+
+            try {
+                System.out.println(response2.getStatusLine());
+                HttpEntity entity2 = response2.getEntity();
+                // do something useful with the response body
+                // and ensure it is fully consumed
+                EntityUtils.consume(entity2);
+            } finally {
+                response2.close();
+            }
+
+            System.out.println("Done.");
+
+        } catch(java.io.IOException e){
+           e.printStackTrace();
+           return;
+        } finally {
+            try {
+                httpclient.close();
+            } catch(java.io.IOException e){
+               e.printStackTrace();
+               return;
+            }
+        }
+
+
+        /* Use these two functions from WinkClient.java:
+
+          public JSONObject queryRowsInTimeRangeWithLastUpdateDate(String uri, String appId, String tableId, String schemaETag,
+          String startTime, String endTime, String cursor, String fetchLimit) throws Exception
+
+            public JSONObject queryRowsInTimeRangeWithSavepointTimestamp(String uri, String appId, String tableId, String schemaETag,
+          String startTime, String endTime, String cursor, String fetchLimit) throws Exception
+
+        Examples in WinkClientTest.java
+
+        */
+    }
+
+    private static void realPostToOpenFn(JSONObject obj) throws Exception{
+//        String html = new ApacheRequest("https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e")
+////                .uri().path("/users").queryParam("id", 333).back()
+//                .method(Request.POST)
+//                .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON)
+//                .fetch()
+//                .as(RestResponse.class)
+////                .assertStatus(HttpURLConnection.HTTP_OK)
+//                .body()
+//                .header().back();
+        SSLUtilities.trustAllHostnames();
+        SSLUtilities.trustAllHttpsCertificates();
+
+        if (obj.size() > 0){
+            System.out.println("Creating post request...");
+
+            String httpsURL = POST_URL;
+
+            URL myurl = new URL(httpsURL);
+            HttpsURLConnection con = (HttpsURLConnection)myurl.openConnection();
+            con.setRequestMethod("POST");
+//        con.setRequestProperty("data", "test");
+
+//        con.setRequestProperty("Content-length", String.valueOf(query.length()));
+            con.setRequestProperty("Content-Type","application/json");
+            con.setRequestProperty("User-Agent", "Mozilla/4.0 (compatible; MSIE 5.0;Windows98;DigExt)");
+            con.setDoOutput(true);
+            con.setDoInput(true);
+
+            DataOutputStream output = new DataOutputStream(con.getOutputStream());
+
+//        StringEntity params =new StringEntity(obj.toString());
+            output.writeBytes(obj.toString());
+
+
+//        output.writeBytes(query);
+
+            output.close();
+
+            DataInputStream input = new DataInputStream( con.getInputStream() );
+
+
+
+            for( int c = input.read(); c != -1; c = input.read() )
+                System.out.print( (char)c );
+            input.close();
+
+            System.out.println("Resp Code:"+con .getResponseCode());
+            System.out.println("Resp Message:"+ con .getResponseMessage());
+        } else{
+            System.out.println("No data in current JSON, skipping post...");
+        }
+
+    }
+
+    // Utility Methods
+
+    //Return a String of a JSON array
+    public static String jsonArrayToString(JSONArray printMe){
+
+        JSONObject returnMe = new JSONObject();
+        //Set the source
+        try{
+            returnMe.put("source", printMe.getJSONObject(0).getString("formId"));
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+        if (printMe.size() != 0){
+            for (int i = 0; i < printMe.size(); i++){
+                try{
+                    try{
+                        returnMe.put("data", (printMe));
+
+                    } catch (Exception e){
+                        e.printStackTrace();
+                        return "";
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
+                    return "";
+                }
+
+            }
+            return returnMe.toString();
+        } else{
+            return "";
+        }
+    }
+
+    //Updates the global latest date
+    public static void compareLatestDate(DateTime sentDate){
+
+        if (sentDate.compareTo(newTimeStamp) > 0){
+            newTimeStamp = sentDate;
+//            System.out.println("REPLACING " + lastPullTimestamp + " WITH " + sentDate);
+        }
+
+//        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
+//        Date date = new Date(0);
+//        String startTime = dateFormat.format(date);
+    }
+
+    //Print an entire JSON object to console
+    public static String prettyPrint(JSONObject printMe){
+        String returnMe = null;
+        try {
+            returnMe = printMe.toString(4);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return returnMe;
+    }
+
+    private static class DefaultTrustManager implements X509TrustManager {
+
+//        @Override
+        public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+//        @Override
+        public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {}
+
+//        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return null;
+        }
+    }
+
+
     
 }
