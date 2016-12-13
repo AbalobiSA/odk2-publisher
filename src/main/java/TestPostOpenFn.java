@@ -1,5 +1,4 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
+import java.io.*;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
@@ -27,15 +26,20 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+//Writing files
+import java.io.IOException;
+
 import org.opendatakit.wink.client.WinkClient;
 
 public class TestPostOpenFn
 {
     /*
-        GLOBAL VARIABLES
-
-        These will be queried by all methods below.
-     */
+    * GLOBAL VARIABLES
+    *
+    * These are used by most of the methods below;
+    * Please change with care.
+    *
+    * */
     private static DateTime lastPullTimestamp = new DateTime(0);
     private static DateTime newTimeStamp;
     private static String agg_url = "https://abalobi-monitor.appspot.com/";
@@ -46,6 +50,10 @@ public class TestPostOpenFn
 //    private static String POST_URL = "http://197.85.186.65:8080";
     private static String POST_URL = "https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e";
 
+    //Switches for file writing
+    private static String TIMESTAMP_FILE = "odk2timestamp.txt";
+    private static boolean append_to_file = false;
+
     //TO BE REMOVED
     private static String testTableId = "catch_test";
 
@@ -53,8 +61,9 @@ public class TestPostOpenFn
     public static void main(String[] args)
     {
         //TODO: Modify this to read in from file
-//        lastPullTimestamp = readTimeStampFromFile(TIMESTAMP_FILE);
-        lastPullTimestamp = new DateTime( /*System.currentTimeMillis()*/0 );
+        lastPullTimestamp = readTimeStampFromFile(TIMESTAMP_FILE);
+//        lastPullTimestamp = DateTime.now();
+//        lastPullTimestamp = new DateTime( /*System.currentTimeMillis()*/0 ); //At the moment, this will run at system time
 
         //This is what will eventually be stored as the last query date.
         //newTimeStamp gets set as the last occurring date in any of the records.
@@ -78,7 +87,7 @@ public class TestPostOpenFn
 
         //Modify this to write to file
         System.out.println("LATEST DATE: " + newTimeStamp);
-        //writeTimeStampToFile(newTimeStamp);
+        writeTimeStampToFile(newTimeStamp.toString());
 
         //Finally, send all these JSON records to OpenFunction.
         try {
@@ -280,7 +289,6 @@ public class TestPostOpenFn
 
             //Create date parser
             SimpleDateFormat parser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS", Locale.ENGLISH);
-//            SimpleDateFormat parser = new SimpleDateFormat("2016-09-23'T'11:39:10.774000000");
 
             //Run through the array
             for (int i = 0; i < printMe.size(); i++){
@@ -480,6 +488,55 @@ public class TestPostOpenFn
 //        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
 //        Date date = new Date(0);
 //        String startTime = dateFormat.format(date);
+    }
+
+    //Reads the latest timestamp from a saved file
+    public static DateTime readTimeStampFromFile(String filepath){
+        try {
+            FileReader fr = new FileReader(filepath);
+            BufferedReader textReader = new BufferedReader(fr);
+
+            String readDate = textReader.readLine();
+            System.out.println("SUCCESSFULLY READ FROM FILE! " );
+            return new DateTime( readDate ) ;
+
+        } catch (Exception e) {
+
+            //If something goes wrong, chances are the file doesn't exist.
+
+            //Create a file with the timestamp of 0
+            try {
+                FileWriter write = new FileWriter ( filepath, append_to_file );
+                PrintWriter print_line = new PrintWriter(write);
+                print_line.println(new DateTime( 0 ));
+                print_line.close();
+                System.out.println("FILE CREATED!");
+
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            //Print errors.
+//            e.printStackTrace();
+
+            //Finally, set the timestamp as 0
+            System.out.println("ERRORS OCCURRED: Setting timestamp as ZERO!");
+            return new DateTime( 0 ) ;
+        }
+
+    }
+
+    public static void writeTimeStampToFile(String timestamp){
+        try {
+            FileWriter write = new FileWriter ( TIMESTAMP_FILE, append_to_file );
+            PrintWriter print_line = new PrintWriter(write);
+            print_line.println(timestamp);
+            print_line.close();
+            System.out.println("SUCCESSFULLY WROTE TIME TO FILE!");
+
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
     }
 
     //Print an entire JSON object to console
