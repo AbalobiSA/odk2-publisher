@@ -1,0 +1,6 @@
+#NOTE: This is an Aether internal implementation file, its format can be changed without prior notice.
+#Thu Jan 05 08:42:18 CAT 2017
+sync-client-1.0-SNAPSHOT-jar-with-dependencies.jar>=
+sync-client-1.0-SNAPSHOT-javadoc.jar>=
+sync-client-1.0-SNAPSHOT.pom>=
+sync-client-1.0-SNAPSHOT.jar>=
