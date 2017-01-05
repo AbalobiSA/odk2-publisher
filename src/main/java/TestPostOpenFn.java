@@ -220,11 +220,21 @@ public class TestPostOpenFn
             SyncClient wc = new SyncClient();
             wc.init(host, userName, password);
             tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, tableID);
+//            wc.getTableDataETag();
             System.out.println("SchemaETag: " + tableSchemaETag);
             System.out.println();
 
             System.out.println("Querying Aggregate (" + agg_url + ") with user " +  userName + "...");
             JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, tableID, tableSchemaETag, startTime, null, null, null);
+            JSONObject test2 = wc.getAllDataChangesSince(agg_url, appId, tableID, tableSchemaETag, null, null, null);
+
+//            System.out.println(test2.getString("dataEtag"));
+            String dETag = test2.getString("dataETag");
+            System.out.println("Data E TAG: " + dETag);
+
+            /*getAllDataChangesSince(String uri, String appId,
+ +      String tableId, String schemaETag, String dataETag, String cursor,
+ +      String fetchLimit)*/
             System.out.println("Done querying, checking result");
 
             if (res.containsKey("rows")) {
