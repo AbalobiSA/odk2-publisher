@@ -60,7 +60,6 @@ public class TestPostOpenFn
 
     public static void main(String[] args)
     {
-        //TODO: Modify this to read in from file
         lastPullTimestamp = readTimeStampFromFile(TIMESTAMP_FILE);
 //        lastPullTimestamp = DateTime.now();
 //        lastPullTimestamp = new DateTime( /*System.currentTimeMillis()*/0 ); //At the moment, this will run at system time
@@ -228,6 +227,9 @@ public class TestPostOpenFn
             JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, tableID, tableSchemaETag, startTime, null, null, null);
             JSONObject test2 = wc.getAllDataChangesSince(agg_url, appId, tableID, tableSchemaETag, null, null, null);
 
+            //Log the output to a text file for inspection
+            logToFile(prettyPrint(test2));
+
 //            System.out.println(test2.getString("dataEtag"));
             String dETag = test2.getString("dataETag");
             System.out.println("Data E TAG: " + dETag);
@@ -262,13 +264,6 @@ public class TestPostOpenFn
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
-
-
-
-
-
 
 
         return new JSONArray();
@@ -543,6 +538,51 @@ public class TestPostOpenFn
             print_line.println(timestamp);
             print_line.close();
             System.out.println("SUCCESSFULLY WROTE TIME TO FILE!");
+
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+    }
+
+    public static void checkForFile(String filepath){
+        try {
+            FileReader fr = new FileReader(filepath);
+            BufferedReader textReaderChecker = new BufferedReader(fr);
+
+            String testMe = textReaderChecker.readLine();
+            textReaderChecker.close();
+//            System.out.println("SUCCESSFULLY READ FROM FILE! " );
+//            return new DateTime( readDate ) ;
+
+        } catch (Exception e) {
+
+            //If something goes wrong, chances are the file doesn't exist.
+
+            try {
+                FileWriter write = new FileWriter ( filepath, false );
+                PrintWriter print_line_blank = new PrintWriter(write);
+                print_line_blank.println("");
+                print_line_blank.close();
+//                System.out.println("FILE CREATED!");
+
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+
+    }
+
+    public static void logToFile(String loggingInput){
+
+        String LOGGING_FILE_NAME = "logs.txt";
+        checkForFile(LOGGING_FILE_NAME);
+
+        try {
+            FileWriter write = new FileWriter ( LOGGING_FILE_NAME, true );
+            PrintWriter print_line = new PrintWriter(write);
+            print_line.println(loggingInput);
+            print_line.close();
+//            System.out.println("SUCCESSFULLY WROTE TIME TO FILE!");
 
         } catch (IOException e1) {
             e1.printStackTrace();
