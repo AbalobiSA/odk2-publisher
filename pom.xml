@@ -12,18 +12,18 @@
           <url>file://${project.basedir}/repo</url>
       </repository>
   </repositories>
-  
+
   <dependencies>
     <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>4.5.2</version>
     </dependency>
-      <dependency>
-          <groupId>org.opendatakit</groupId>
-          <artifactId>sync-client</artifactId>
-          <version>1.0-SNAPSHOT</version>
-      </dependency>
+    <dependency>
+        <groupId>org.opendatakit</groupId>
+        <artifactId>sync-client</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </dependency>
     <dependency>
         <groupId>org.json</groupId>
         <artifactId>json</artifactId>
@@ -77,16 +77,16 @@
       </dependency>
 
   </dependencies>
-  
-  
+
+
   <build>
     <plugins>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
           <artifactId>appassembler-maven-plugin</artifactId>
           <version>1.1.1</version>
-          <configuration> 
-            <assembleDirectory>target</assembleDirectory> 
+          <configuration>
+            <assembleDirectory>target</assembleDirectory>
             <programs>
                 <program>
                     <mainClass>WorkerProcess</mainClass>
@@ -98,17 +98,17 @@
                 </program>
                 <program>
                     <mainClass>TestPostOpenFn</mainClass>
-                    <name>testpost</name>                    
+                    <name>testpost</name>
                 </program>
             </programs>
           </configuration>
           <executions>
               <execution>
                   <phase>package</phase><goals><goal>assemble</goal></goals>
-              </execution>            
+              </execution>
           </executions>
       </plugin>
     </plugins>
-  </build>  
+  </build>
 
 </project>
