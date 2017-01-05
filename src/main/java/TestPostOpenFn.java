@@ -249,7 +249,7 @@ public class TestPostOpenFn
             appendToFile(ETAGS_FILE, dETag);
 
             //Log the output to a text file for inspection
-            logToFile(prettyPrint(res));
+//            logToFile(prettyPrint(res));
 
 //            System.out.println(test2.getString("dataEtag"));
 //            String dETag = test2.getString("dataETag");
