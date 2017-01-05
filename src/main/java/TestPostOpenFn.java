@@ -52,11 +52,12 @@ public class TestPostOpenFn
 
     //Switches for file writing
     private static String TIMESTAMP_FILE = "odk2timestamp.txt";
+    private static String ETAGS_FILE = "etags.txt";
     private static boolean append_to_file = false;
 
-    //TO BE REMOVED
-    private static String testTableId = "catch_test";
-
+    //Array to read in all past ETags, or "database time snapshots"
+    private static String [] uuidFromETags;
+    private static int etagIterator;
 
     public static void main(String[] args)
     {
@@ -71,11 +72,26 @@ public class TestPostOpenFn
         //After reading from file, this global will be used to query all the records.
         System.out.println("INITIAL DATE USED FROM ARGS: " + lastPullTimestamp);
 
+        //Read in UUID's from log file, create if doesn't exist
+        uuidFromETags = getEtagsFromFile(ETAGS_FILE);
+
+//        if (uuidFromETags != null){
+//            for (int i = 0; i < uuidFromETags.length; i++){
+//                System.out.println(uuidFromETags[i]);
+//            }
+//        } else{
+//
+//        }
+
+        wipeFile(ETAGS_FILE);
+
+
+
         //Query the tables based on global arguments, and store each table full of new rows, in a JSON array.
-        JSONArray rowsMonitor = getTableItems("abalobi_monitor");
-        JSONArray rowsTrip = getTableItems("abalobi_boat");
-        JSONArray rowsCatch = getTableItems("abalobi_catch");
-        JSONArray rowsSample = getTableItems("abalobi_sample");
+        JSONArray rowsMonitor = getTableItems("abalobi_monitor", uuidFromETags[0]);
+        JSONArray rowsTrip = getTableItems("abalobi_boat", uuidFromETags[1]);
+        JSONArray rowsCatch = getTableItems("abalobi_catch", uuidFromETags[2]);
+        JSONArray rowsSample = getTableItems("abalobi_sample", uuidFromETags[3]);
 
         //Create a JSON object with an array containing all new records
         //Note: Each of these will try to compete for the latest date.
@@ -98,98 +114,100 @@ public class TestPostOpenFn
             e.printStackTrace();
         }
     }
-    private static void testCheckForNewRows() {
-
-        int batchSize = 1000;
-
-        URL url;
-        String host;
-
-        //String colName = "seq_num";
-        //String colKey = "seq_num";
-        //String colType = "string";
-
-        //String testTableSchemaETag = "createRowsForQueryTest";
-        String tableSchemaETag = null;
-        //String listOfChildElements = "[]";
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
-        Date date = new Date(0);
-        String startTime = dateFormat.format(date);
-
-        System.out.println("Date used is: " + date);
-        System.out.println("Start time: " + startTime);
-
-        int sizeOfSeqTable = 50;
-
-        try {
-            System.out.println("Initialising WinkClient...");
-
-            url = new URL(agg_url);
-            host = url.getHost();
-
-            SyncClient wc = new SyncClient();
-            wc.init(host, userName, password);
-            tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, testTableId);
-            System.out.println("SchemaETag: " + tableSchemaETag);
-            System.out.println();
 
 
-          /*  Adds new rows (from WinkClient test code)
-          ArrayList<Column> columns = new ArrayList<Column>();
-
-          columns.add(new Column(colKey, colName, colType, listOfChildElements));
-
-          JSONObject result = wc.createTable(agg_url, appId, testTableId, testTableSchemaETag, columns);
-
-          if (result.containsKey("tableId")) {
-            tableSchemaETag = result.getString("schemaETag");
-          }
-
-          ArrayList<Row> rowList = new ArrayList<Row>();
-          for (int i = 0; i < sizeOfSeqTable; i++) {
-            DataKeyValue dkv = new DataKeyValue(colName, Integer.toString(i));
-            ArrayList<DataKeyValue> dkvl = new ArrayList<DataKeyValue>();
-            dkvl.add(dkv);
-            String RowId = "uuid:" + UUID.randomUUID().toString();
-            Row row = Row.forInsert(RowId, null, null, null, null, null, null, dkvl);
-            rowList.add(row);
-          }
-
-          wc.createRowsUsingBulkUpload(agg_url, appId, testTableId, tableSchemaETag, rowList, 0);
-          */
-
-            System.out.println("Querying Aggregate (" + agg_url + ") with user " +  userName + "...");
-            JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, testTableId, tableSchemaETag, startTime, null, null, null);
-            System.out.println("Done querying, checking result");
-
-            if (res.containsKey("rows")) {
-                JSONArray rowsObj = res.getJSONArray("rows");
-                //assertEquals(rowsObj.size(), sizeOfSeqTable);
-                System.out.println("Found " + rowsObj.size() + " new rows.");
-                if (rowsObj.size() > 0)
-                {
-                    //Run through all entries, and get the last
-                    System.out.println("JSON[0]:");
-                    System.out.println(rowsObj.getJSONObject(0).toString());
-                }
-
-            }
-            else {
-                System.out.println("No 'rows' found in result");
-            }
-
-            //wc.deleteTableDefinition(agg_url, appId, testTableId, tableSchemaETag);
-
-            wc.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+//    private static void testCheckForNewRows() {
+//
+//        int batchSize = 1000;
+//
+//        URL url;
+//        String host;
+//
+//        //String colName = "seq_num";
+//        //String colKey = "seq_num";
+//        //String colType = "string";
+//
+//        //String testTableSchemaETag = "createRowsForQueryTest";
+//        String tableSchemaETag = null;
+//        //String listOfChildElements = "[]";
+//
+//        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS");
+//        Date date = new Date(0);
+//        String startTime = dateFormat.format(date);
+//
+//        System.out.println("Date used is: " + date);
+//        System.out.println("Start time: " + startTime);
+//
+//        int sizeOfSeqTable = 50;
+//
+//        try {
+//            System.out.println("Initialising WinkClient...");
+//
+//            url = new URL(agg_url);
+//            host = url.getHost();
+//
+//            SyncClient wc = new SyncClient();
+//            wc.init(host, userName, password);
+//            tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, testTableId);
+//            System.out.println("SchemaETag: " + tableSchemaETag);
+//            System.out.println();
+//
+//
+//          /*  Adds new rows (from WinkClient test code)
+//          ArrayList<Column> columns = new ArrayList<Column>();
+//
+//          columns.add(new Column(colKey, colName, colType, listOfChildElements));
+//
+//          JSONObject result = wc.createTable(agg_url, appId, testTableId, testTableSchemaETag, columns);
+//
+//          if (result.containsKey("tableId")) {
+//            tableSchemaETag = result.getString("schemaETag");
+//          }
+//
+//          ArrayList<Row> rowList = new ArrayList<Row>();
+//          for (int i = 0; i < sizeOfSeqTable; i++) {
+//            DataKeyValue dkv = new DataKeyValue(colName, Integer.toString(i));
+//            ArrayList<DataKeyValue> dkvl = new ArrayList<DataKeyValue>();
+//            dkvl.add(dkv);
+//            String RowId = "uuid:" + UUID.randomUUID().toString();
+//            Row row = Row.forInsert(RowId, null, null, null, null, null, null, dkvl);
+//            rowList.add(row);
+//          }
+//
+//          wc.createRowsUsingBulkUpload(agg_url, appId, testTableId, tableSchemaETag, rowList, 0);
+//          */
+//
+//            System.out.println("Querying Aggregate (" + agg_url + ") with user " +  userName + "...");
+//            JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, testTableId, tableSchemaETag, startTime, null, null, null);
+//            System.out.println("Done querying, checking result");
+//
+//            if (res.containsKey("rows")) {
+//                JSONArray rowsObj = res.getJSONArray("rows");
+//                //assertEquals(rowsObj.size(), sizeOfSeqTable);
+//                System.out.println("Found " + rowsObj.size() + " new rows.");
+//                if (rowsObj.size() > 0)
+//                {
+//                    //Run through all entries, and get the last
+//                    System.out.println("JSON[0]:");
+//                    System.out.println(rowsObj.getJSONObject(0).toString());
+//                }
+//
+//            }
+//            else {
+//                System.out.println("No 'rows' found in result");
+//            }
+//
+//            //wc.deleteTableDefinition(agg_url, appId, testTableId, tableSchemaETag);
+//
+//            wc.close();
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     //Queries the database and fetches new entries
-    public static JSONArray getTableItems(String tableID){
+    public static JSONArray getTableItems(String tableID, String parsedEtag){
 
         JSONArray returnMe;
         URL url;
@@ -224,15 +242,18 @@ public class TestPostOpenFn
             System.out.println();
 
             System.out.println("Querying Aggregate (" + agg_url + ") with user " +  userName + "...");
-            JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, tableID, tableSchemaETag, startTime, null, null, null);
-            JSONObject test2 = wc.getAllDataChangesSince(agg_url, appId, tableID, tableSchemaETag, null, null, null);
+//            JSONObject res = wc.queryRowsInTimeRangeWithLastUpdateDate(agg_url, appId, tableID, tableSchemaETag, startTime, null, null, null);
+            JSONObject res = wc.getAllDataChangesSince(agg_url, appId, tableID, tableSchemaETag, parsedEtag, null, null);
+
+            String dETag = res.getString("dataETag");
+            appendToFile(ETAGS_FILE, dETag);
 
             //Log the output to a text file for inspection
-            logToFile(prettyPrint(test2));
+            logToFile(prettyPrint(res));
 
 //            System.out.println(test2.getString("dataEtag"));
-            String dETag = test2.getString("dataETag");
-            System.out.println("Data E TAG: " + dETag);
+//            String dETag = test2.getString("dataETag");
+//            System.out.println("Data E TAG: " + dETag);
 
             /*getAllDataChangesSince(String uri, String appId,
  +      String tableId, String schemaETag, String dataETag, String cursor,
@@ -448,6 +469,35 @@ public class TestPostOpenFn
 
     }
 
+    private static String[] getEtagsFromFile(String etagFileName){
+        //Create an array for returning
+        String [] returnMe = new String[4];
+
+        //Check if file exists, if not, create it and return null
+        if (isFileNew(ETAGS_FILE)){
+            //The file is created and blank.
+            for (int i = 0; i < 4; i++){
+                returnMe[i] = null;
+            }
+            return returnMe;
+        } else{
+            //Read in from the file and return the uuid's
+            try {
+                FileReader fr = new FileReader(ETAGS_FILE);
+                BufferedReader textReaderChecker = new BufferedReader(fr);
+
+                for (int i = 0; i < returnMe.length; i++) {
+                    returnMe[i] = textReaderChecker.readLine();
+                }
+                textReaderChecker.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return returnMe;
+    }
+
     // Utility Methods
 
     //Return a String of a JSON array
@@ -571,6 +621,61 @@ public class TestPostOpenFn
         }
 
     }
+
+    public static boolean isFileNew(String filepath){
+        try {
+            FileReader fr = new FileReader(filepath);
+            BufferedReader booleanReaderChecker = new BufferedReader(fr);
+
+            String testMe = booleanReaderChecker.readLine();
+            booleanReaderChecker.close();
+//            System.out.println("SUCCESSFULLY READ FROM FILE! " );
+//            return new DateTime( readDate ) ;
+
+        } catch (Exception e) {
+
+            //If something goes wrong, chances are the file doesn't exist.
+
+            try {
+                FileWriter write = new FileWriter ( filepath, false );
+                PrintWriter print_line_blank = new PrintWriter(write);
+                print_line_blank.print("");
+                print_line_blank.close();
+                return true;
+//                System.out.println("FILE CREATED!");
+
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    public static void wipeFile(String filepath){
+        try {
+            FileWriter write = new FileWriter ( filepath, false );
+            PrintWriter print_line_blank = new PrintWriter(write);
+            print_line_blank.print("");
+            print_line_blank.close();
+
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+    }
+
+    public static void appendToFile(String filepath, String text){
+        try {
+            FileWriter write = new FileWriter ( filepath, true );
+            PrintWriter print_line_blank = new PrintWriter(write);
+            print_line_blank.println(text);
+            print_line_blank.close();
+
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+    }
+
+
 
     public static void logToFile(String loggingInput){
 
