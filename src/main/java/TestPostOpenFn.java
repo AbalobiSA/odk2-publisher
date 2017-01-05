@@ -29,8 +29,8 @@ import javax.net.ssl.X509TrustManager;
 //Writing files
 import java.io.IOException;
 
-import org.opendatakit.wink.client.WinkClient;
-
+//import org.opendatakit.wink.client.WinkClient;
+import org.opendatakit.sync.client.SyncClient;
 public class TestPostOpenFn
 {
     /*
@@ -129,7 +129,7 @@ public class TestPostOpenFn
             url = new URL(agg_url);
             host = url.getHost();
 
-            WinkClient wc = new WinkClient();
+            SyncClient wc = new SyncClient();
             wc.init(host, userName, password);
             tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, testTableId);
             System.out.println("SchemaETag: " + tableSchemaETag);
@@ -217,7 +217,7 @@ public class TestPostOpenFn
              */
             url = new URL(agg_url);
             host = url.getHost();
-            WinkClient wc = new WinkClient();
+            SyncClient wc = new SyncClient();
             wc.init(host, userName, password);
             tableSchemaETag = wc.getSchemaETagForTable(agg_url, appId, tableID);
             System.out.println("SchemaETag: " + tableSchemaETag);
@@ -565,5 +565,5 @@ public class TestPostOpenFn
     }
 
 
-    
+
 }
