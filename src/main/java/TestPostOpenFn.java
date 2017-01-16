@@ -51,8 +51,8 @@ public class TestPostOpenFn
     private static String POST_URL = "https://www.openfn.org/inbox/3afab0f1-3937-4ca8-95a3-5491f6f32a4e";
 
     //Switches for file writing
-    private static String TIMESTAMP_FILE = "odk2timestamp.txt";
-    private static String ETAGS_FILE = "etags.txt";
+    private static String TIMESTAMP_FILE = "./datafiles/odk2timestamp.txt";
+    private static String ETAGS_FILE = "./datafiles/etags.txt";
     private static boolean append_to_file = false;
 
     //Array to read in all past ETags, or "database time snapshots"
@@ -73,7 +73,12 @@ public class TestPostOpenFn
         System.out.println("INITIAL DATE USED FROM ARGS: " + lastPullTimestamp);
 
         //Read in UUID's from log file, create if doesn't exist
-        uuidFromETags = getEtagsFromFile(ETAGS_FILE);
+        try{
+            uuidFromETags = getEtagsFromFile(ETAGS_FILE);
+        } catch (Exception ex){
+            System.exit(0);
+        }
+
 
 //        if (uuidFromETags != null){
 //            for (int i = 0; i < uuidFromETags.length; i++){
@@ -561,6 +566,8 @@ public class TestPostOpenFn
 
             //Create a file with the timestamp of 0
             try {
+                File newdirectory = new File("datafiles");
+                newdirectory.mkdir();
                 FileWriter write = new FileWriter ( filepath, append_to_file );
                 PrintWriter print_line = new PrintWriter(write);
                 print_line.println(new DateTime( 0 ));
@@ -637,6 +644,9 @@ public class TestPostOpenFn
             //If something goes wrong, chances are the file doesn't exist.
 
             try {
+                //Create the folder
+                File newdirectory = new File("datafiles");
+                newdirectory.mkdir();
                 FileWriter write = new FileWriter ( filepath, false );
                 PrintWriter print_line_blank = new PrintWriter(write);
                 print_line_blank.print("");
@@ -646,6 +656,7 @@ public class TestPostOpenFn
 
             } catch (IOException e1) {
                 e1.printStackTrace();
+                System.exit(0);
             }
         }
         return false;
